@@ -6,6 +6,7 @@ The Secure File Transfer System is a web application that provides cryptographic
 
 - The .txt file you want to process must be in the project directory.
 - If the operation was successful, the page refreshes itself. If you received no error message, you are on the right track.
+- Don't forget to read the [Disclaimer](#disclaimer) section. And if you have any questions, please contact me.
 
 ## Table of Contents
 
@@ -50,13 +51,7 @@ Follow these steps to set up and run the Secure File Transfer System locally:
 
 ```bash
 # Clone the repository
-git clone https://github.com/your-username/Secure-File-Transfer-System
-
-# Navigate to the project directory
-cd Secure-File-Transfer-System
-
-# Install dependencies
-pip install -r requirements.txt
+git clone https://github.com/alperengokbak/Asymmetric-Symmetric-Encryption.git
 
 # Run the application
 python app.py
