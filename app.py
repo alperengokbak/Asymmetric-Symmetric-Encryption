@@ -1,5 +1,5 @@
 from flask import Flask, render_template, request, redirect
-from func.asymmetric_functions import generate_key_pair, sign_data, prehash_sign_data, verify_signature, derive_key_and_encrypt, derive_key_and_decrypt, save_private_key, save_public_key, load_private_key, load_public_key
+from func.asymmetric_functions import generate_key_pair, prehash_sign_data, verify_signature, derive_key_and_encrypt, derive_key_and_decrypt, save_private_key, save_public_key, load_private_key, load_public_key
 from func.symmetric_functions import createSymmetricKey, encrypt_file_symmetric, decrypt_file_symmetric, saveSymmetricKey, loadSymmetricKey
 import os
 
@@ -20,6 +20,15 @@ def encrypt_symmetric(receiver_keys_dir, file):
     encrypt_file_symmetric(file.filename, os.path.join(os.path.join(receiver_keys_dir, 'received'), 'symmetric_encrypted_' + file.filename), symmetric_key)
 
     return os.path.join(os.path.join(receiver_keys_dir, 'received'), 'symmetric_encrypted_' + file.filename)
+
+def decrypt_symmetric(symmetric_key_path, user_keys_dir, file):
+    # Load the symmetric key
+    symmetric_key = loadSymmetricKey(symmetric_key_path)
+
+    # Decrypt the file symmetrically
+    decrypt_file_symmetric(os.path.join(user_keys_dir + "/received", file.filename), os.path.join(os.path.join(user_keys_dir, 'downloaded'), 'decrypted_' + file.filename), symmetric_key)
+        
+    return render_template('index.html')
 
 @app.route('/')
 def index():
@@ -110,7 +119,7 @@ def download():
     sender_username = request.form['sender']
     action = request.form['action_decrypt']
 
-    if file.filename == '' or original_file.filename == '' or sender_username == '' or username == '' or action not in ['verify', 'decrypt', 'verify_and_decrypt']:
+    if file.filename == '' or sender_username == '' or username == '' or action not in ['verify', 'decrypt', 'verify_and_decrypt']:
         return "Invalid parameters"
     
     # Get the user's public key and private key
@@ -131,26 +140,22 @@ def download():
     sender_public_key = load_public_key(sender_public_key_path)
 
     # Decrypt and verify the file based on its name
-    if file.filename.startswith('symmetric_encrypted_'):
-        # Load the symmetric key
-        symmetric_key = loadSymmetricKey(symmetric_key_path)
+    if file.filename.startswith('symmetric_encrypted_') and action == 'decrypt':
+        decrypt_symmetric(symmetric_key_path, user_keys_dir, file)
 
-        # Decrypt the file symmetrically
-        decrypt_file_symmetric(os.path.join(user_keys_dir + "/received", file.filename), os.path.join(os.path.join(user_keys_dir, 'downloaded'), 'decrypted_' + file.filename), symmetric_key)
-        
-        #f"Download decrypted_{file.filename[10:]}"
-        return render_template('index.html')
-
-    elif file.filename.startswith('asymmetric_encrypted_'):
+    elif file.filename.startswith('asymmetric_encrypted_') and (action == 'verify' or action == 'verify_and_decrypt'):
         # Decrypt and verify the file asymmetrically
         decrypted_file = derive_key_and_decrypt(os.path.join(user_keys_dir + "/received", file.filename), os.path.join(os.path.join(user_keys_dir, 'downloaded'), 'decrypted_' + file.filename), sender_public_key, user_private_key)
 
         if verify_signature(original_file, decrypted_file, sender_public_key):
-            return f"Download verified_{file.filename} (Signature verified)"
+            if action == 'verify':
+                return f"Download verified_{file.filename[19:]} (Signature verification successful)"
+            elif action == 'verify_and_decrypt':
+                decrypt_symmetric(symmetric_key_path, user_keys_dir, file)
         else:
             return f"Download verified_{file.filename} (Signature verification failed)"
 
-    return "Invalid filename"
+    return "Invalid parameters"
 
 if __name__ == '__main__':
     app.run(debug=True)
