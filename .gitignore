@@ -1,0 +1,85 @@
+# Byte-compiled / optimized Python files
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# IDE-specific files
+.vscode/
+.idea/
+
+# Environment-specific files
+.env
+.env.local
+.env.*.local
+
+# Compiled Python modules
+*.pyc
+*.pyo
+*.pyd
+
+# Python packaging
+dist/
+build/
+*.egg-info/
+*.egg
+
+# Virtual environment
+venv/
+venv3/
+__venv__/
+
+# Jupyter Notebook
+.ipynb_checkpoints
+
+# Logs and databases
+*.log
+*.sqlite3
+
+# Testing
+.coverage
+.tox/
+
+# Dependency directories
+.env
+lib/
+lib64/
+local/
+node_modules/
+
+# Distribution / packaging
+*.zip
+*.tar.gz
+*.tar.xz
+*.tar.bz2
+*.tar.lzma
+*.tar
+*.gz
+*.bz2
+*.xz
+*.exe
+*.msi
+*.egg-info
+*.egg
+dist/
+build/
+
+# Ignore PyCharm files
+.idea/
+
+# Ignore Visual Studio Code files
+.vscode/
+
+# Ignore OS generated files
+ehthumbs.db
+Thumbs.db
+
+# Ignore pytest cache
+__pycache__/
+
+.DS_Store
+keys
+users
+sample_files
+app.txt
+test.txt

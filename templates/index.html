@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Cryptography Project</title>
+  </head>
+  <body>
+    <h1>Cryptography Project</h1>
+    <div style="display: flex; flex-direction: column; height: 40vh; justify-content: space-between">
+      <form action="/upload" method="post" enctype="multipart/form-data">
+        <h2>Encrypt Functions</h2>
+        <label for="file">Select a file:</label>
+        <input type="file" name="file" id="file" accept=".pem, .txt" />
+        <div
+          style="
+            max-width: 40vw;
+            display: flex;
+            margin-top: 15px;
+            margin-bottom: 15px;
+            justify-content: space-between;
+            align-items: center;
+          "
+        >
+          <div style="display: flex; flex-direction: column; height: 6vh; justify-content: space-between; width: 40vw">
+            <div>
+              <label for="username">Username:</label>
+              <input type="text" name="username" id="username" required />
+            </div>
+            <div>
+              <label for="receiver">Receiver Username:</label>
+              <input type="text" name="receiver" id="receiver" required />
+            </div>
+          </div>
+        </div>
+
+        <label for="action">Select an action:</label>
+        <select name="action" id="action">
+          <option value="sign">Sign</option>
+          <option value="encrypt">Encrypt</option>
+          <option value="sign_and_encrypt">Sign and Encrypt</option>
+        </select>
+
+        <input type="submit" value="Upload" />
+      </form>
+      <form action="/download" method="post" enctype="multipart/form-data">
+        <h2>Decrypt Functions</h2>
+        <label for="original_file">Upload original file:</label>
+        <input type="file" name="original_file" id="original_file" accept=".pem, .txt" />
+        <label for="file_decrypt">Upload encrypted or signed file:</label>
+        <input type="file" name="file_decrypt" id="file_decrypt" accept=".pem, .txt" />
+
+        <div
+          style="
+            max-width: 40vw;
+            display: flex;
+            margin-top: 15px;
+            margin-bottom: 15px;
+            justify-content: space-between;
+            align-items: center;
+          "
+        >
+          <div style="display: flex; flex-direction: column; height: 6vh; justify-content: space-between; width: 40vw">
+            <div>
+              <label for="username_decrypt">Username:</label>
+              <input type="text" name="username_decrypt" id="username_decrypt" required />
+            </div>
+            <div>
+              <label for="sender">Sender Username:</label>
+              <input type="text" name="sender" id="sender" required />
+            </div>
+          </div>
+        </div>
+
+        <label for="action_decrypt">Select an action:</label>
+        <select name="action_decrypt" id="action_decrypt">
+          <option value="verify">Verify</option>
+          <option value="decrypt">Decrypt</option>
+          <option value="verify_and_decrypt">Verify and Decrypt</option>
+        </select>
+
+        <input type="submit" value="Download" />
+      </form>
+    </div>
+  </body>
+</html>
