@@ -54,12 +54,17 @@ def encrypt_file_symmetric(input_file_path: str, output_file_path: str, symmetri
     
     return output_file_path
 
-def decrypt_file_symmetric(input_file_path: str, output_file_path: str, symmetric_key: bytes):
+def decrypt_file_symmetric(input_file_path: str, output_file_path: str, symmetric_key: bytes, original_file):
     with open(input_file_path, 'rb') as file:
         encrypted_message = file.read()
+    
+    try:
+        real_data = original_file.read()
+    except AttributeError:
+        real_data = None
+
     try:
         decrypted_message = symmetric_key.decrypt(encrypted_message)
-        print(decrypted_message)
     except InvalidToken:
         return f"Invalid key for {input_file_path}"
     
@@ -70,7 +75,10 @@ def decrypt_file_symmetric(input_file_path: str, output_file_path: str, symmetri
     with open(output_file_path, 'wb') as decrypted_file:
         decrypted_file.write(decrypted_message)
 
-    return output_file_path
+    if decrypted_message == real_data:
+        return output_file_path
+
+    return False
 
 def timestampMessage(encrypted_message: bytes, key: bytes) -> bytes:
     # Creates a Fernet cipher object (f) using the generated key.

@@ -60,8 +60,8 @@
       <form action="/download" method="post" enctype="multipart/form-data">
         <h2>Decrypt Functions</h2>
         <h5 style="color: red; font-size: medium; font-weight: bold">
-          Reminder: If you will only decrypt the file encrypted with symmetric cipher, you don't have to upload the
-          original file !
+          Reminder: Signature and signature_and_encryption, you must select asymmetric_encrypted during decryption. This
+          is how the sequence works.
         </h5>
         <label style="font-weight: bold" for="original_file">Upload original file:</label>
         <input type="file" name="original_file" id="original_file" accept=".pem, .txt" required />
@@ -91,7 +91,7 @@
         </div>
 
         <label style="font-weight: bold" for="action_decrypt">Select an action:</label>
-        <select onchange="handleFileSelect()" name="action_decrypt" id="action_decrypt">
+        <select name="action_decrypt" id="action_decrypt">
           <option value="verify">Verify</option>
           <option value="decrypt">Decrypt</option>
           <option value="verify_and_decrypt">Verify and Decrypt</option>
@@ -106,22 +106,5 @@
         />
       </form>
     </div>
-    <script>
-      function handleFileSelect() {
-        var originalFile = document.getElementById("original_file");
-        var action = document.getElementById("action_decrypt");
-
-        if ((action.value === "verify" || action.value === "verify_and_decrypt") && originalFile.value.trim() === "") {
-          throw new Error("Please select a file for verification.");
-        }
-
-        if (action.value === "verify" || action.value === "verify_and_decrypt") {
-          originalFile.setAttribute("required", "");
-        }
-        if (action.value === "decrypt") {
-          originalFile.removeAttribute("required");
-        }
-      }
-    </script>
   </body>
 </html>
