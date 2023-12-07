@@ -5,8 +5,9 @@ The Secure File Transfer System is a web application that provides cryptographic
 ## Notice
 
 - The .txt file you want to process must be in the project directory.
-- If the operation was successful, the page refreshes itself. If you received no error message, you are on the right track.
+- If you don't have an asymmetric key pair, don't worry, it is automatically generated before the encryption process !
 - Don't forget to read the [Disclaimer](#disclaimer) section. And if you have any questions, please contact me.
+- Signature and signature_and_encryption, you must select asymmetric_encrypted during decryption. This is how the sequence works.
 
 ## Table of Contents
 
@@ -114,7 +115,7 @@ def derive_key_and_encrypt(input_file, output_file, receiver_public_key, private
     ).derive(shared_key)
 
     # Use the symmetric key to encrypt the data
-    cipher = Cipher(algorithms.AES(derived_key), modes.CFB(os.urandom(16)))
+    cipher = Cipher(algorithms.AES(derived_key), modes.CFB(b'\x00' * 16))
     encryptor = cipher.encryptor()
     encrypted_data = encryptor.update(plaintext) + encryptor.finalize()
 
@@ -125,7 +126,10 @@ def derive_key_and_encrypt(input_file, output_file, receiver_public_key, private
         file.write(encrypted_data)
 
 def prehash_sign_data(input_file, output_file, private_key):
-    with open(input_file, 'rb') as file:
+    # If input_file contains only the filename, join it with the appropriate directory path
+    input_file_path = input_file if os.path.isabs(input_file) else os.path.join(os.getcwd(), input_file)
+
+    with open(input_file_path, 'rb') as file:
         data = file.read()
 
     # Using a consistent hash algorithm
