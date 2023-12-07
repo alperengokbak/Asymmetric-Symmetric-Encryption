@@ -59,8 +59,10 @@ def decrypt_file_symmetric(input_file_path: str, output_file_path: str, symmetri
         encrypted_message = file.read()
     try:
         decrypted_message = symmetric_key.decrypt(encrypted_message)
+        print(decrypted_message)
     except InvalidToken:
         return f"Invalid key for {input_file_path}"
+    
     
     # Create the directory if it doesn't exist
     os.makedirs(os.path.dirname(output_file_path), exist_ok=True)

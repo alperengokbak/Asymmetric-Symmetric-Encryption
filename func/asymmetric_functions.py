@@ -88,7 +88,31 @@ def verify_signature(original_file, signature_file, sender_public_key):
 
     # Verify the signature
     try:
-        sender_public_key.verify(signature, hashed_data, ec.ECDSA(hashes.SHA256()))
+        sender_public_key.verify(signature, hashed_data, ec.ECDSA(utils.Prehashed(hash_algorithm)))
+        return True  # Signature is valid
+    except InvalidSignature:
+        return False  # Signature is invalid
+
+def verify_signature_byte(original_file, signature_file, sender_public_key):
+    # Read the plaintext file
+    with open(original_file, 'rb') as file:
+        data = file.read()
+
+    # Read the signature from the signature file
+    with open(signature_file, 'rb') as sig_file:
+        signature = sig_file.read()
+
+    # Using a consistent hash algorithm
+    hash_algorithm = hashes.SHA256()
+
+    # Creating a hasher and updating it with new data
+    hash_value = hashes.Hash(hash_algorithm)
+    hash_value.update(data)
+    hashed_data = hash_value.finalize()
+
+    # Verify the signature
+    try:
+        sender_public_key.verify(signature, hashed_data, ec.ECDSA(utils.Prehashed(hash_algorithm)))
         return True  # Signature is valid
     except InvalidSignature:
         return False  # Signature is invalid
@@ -114,7 +138,7 @@ def derive_key_and_encrypt(input_file, output_file, receiver_public_key, private
     ).derive(shared_key)
     
     # Use the symmetric key to encrypt the data
-    cipher = Cipher(algorithms.AES(derived_key), modes.CFB(os.urandom(16)))
+    cipher = Cipher(algorithms.AES(derived_key), modes.CFB(b'\x00' * 16))
     encryptor = cipher.encryptor()
     encrypted_data = encryptor.update(plaintext) + encryptor.finalize()
 
@@ -141,7 +165,7 @@ def derive_key_and_decrypt(input_file, output_file, sender_public_key, private_k
     ).derive(shared_key)
 
     # Use the derived key to decrypt the data
-    cipher = Cipher(algorithms.AES(derived_key), modes.CFB(os.urandom(16)))
+    cipher = Cipher(algorithms.AES(derived_key), modes.CFB(b'\x00' * 16))
     decryptor = cipher.decryptor()
     decrypted_data = decryptor.update(encrypted_data) + decryptor.finalize()
 

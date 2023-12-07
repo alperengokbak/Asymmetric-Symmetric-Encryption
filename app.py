@@ -1,5 +1,5 @@
 from flask import Flask, render_template, request, redirect
-from func.asymmetric_functions import generate_key_pair, prehash_sign_data, verify_signature, derive_key_and_encrypt, derive_key_and_decrypt, save_private_key, save_public_key, load_private_key, load_public_key
+from func.asymmetric_functions import generate_key_pair, prehash_sign_data, verify_signature, verify_signature_byte, derive_key_and_encrypt, derive_key_and_decrypt, save_private_key, save_public_key, load_private_key, load_public_key
 from func.symmetric_functions import createSymmetricKey, encrypt_file_symmetric, decrypt_file_symmetric, saveSymmetricKey, loadSymmetricKey
 import os
 
@@ -20,6 +20,15 @@ def encrypt_symmetric(receiver_keys_dir, file):
     encrypt_file_symmetric(file.filename, os.path.join(os.path.join(receiver_keys_dir, 'received'), 'symmetric_encrypted_' + file.filename), symmetric_key)
 
     return os.path.join(os.path.join(receiver_keys_dir, 'received'), 'symmetric_encrypted_' + file.filename)
+
+def decrypt_symmetric_signed(symmetric_key_path, user_keys_dir, file):
+    # Load the symmetric key
+    symmetric_key = loadSymmetricKey(symmetric_key_path)
+
+    # Decrypt the file symmetrically
+    decrypt_file_symmetric(os.path.join(user_keys_dir + "/received", "symmetric_encrypted_" + file.filename), os.path.join(os.path.join(user_keys_dir, 'downloaded'), 'decrypted_signed_' + file.filename), symmetric_key)
+        
+    return render_template('index.html')
 
 def decrypt_symmetric(symmetric_key_path, user_keys_dir, file):
     # Load the symmetric key
@@ -93,8 +102,11 @@ def upload():
         # Encrypt the signed file using the recipient's public key
         derive_key_and_encrypt(signed_file_path , os.path.join(os.path.join(receiver_keys_dir, 'received'), 'asymmetric_encrypted_' + file.filename), receiver_public_key, user_private_key)
 
+        return f"Uploaded asymmetric_encrypted{file.filename} to {receiver_username} file directory !"
+
     elif action == 'encrypt':
         encrypt_symmetric(receiver_keys_dir, file)
+        return f"Uploaded symmetric_encrypted{file.filename} to {receiver_username} file directory !"
 
     elif action == 'sign_and_encrypt':
         # Encrypt the file symmetrically
@@ -106,7 +118,9 @@ def upload():
         # Encrypt the signed file using the recipient's public key
         derive_key_and_encrypt(signed_file_path, os.path.join(os.path.join(receiver_keys_dir, 'received'), 'asymmetric_encrypted_' + file.filename), receiver_public_key, user_private_key)
 
-    return render_template('index.html')
+        return f"Uploaded asymmetric_encrypted{file.filename} to {receiver_username} file directory !"
+
+    return "Invalid parameters"
 
 @app.route('/download', methods=['POST'])
 def download():
@@ -142,16 +156,19 @@ def download():
     # Decrypt and verify the file based on its name
     if file.filename.startswith('symmetric_encrypted_') and action == 'decrypt':
         decrypt_symmetric(symmetric_key_path, user_keys_dir, file)
+        return f"Download decrypted_{file.filename}"
 
     elif file.filename.startswith('asymmetric_encrypted_') and (action == 'verify' or action == 'verify_and_decrypt'):
         # Decrypt and verify the file asymmetrically
         decrypted_file = derive_key_and_decrypt(os.path.join(user_keys_dir + "/received", file.filename), os.path.join(os.path.join(user_keys_dir, 'downloaded'), 'decrypted_' + file.filename), sender_public_key, user_private_key)
 
-        if verify_signature(original_file, decrypted_file, sender_public_key):
-            if action == 'verify':
-                return f"Download verified_{file.filename[19:]} (Signature verification successful)"
-            elif action == 'verify_and_decrypt':
-                decrypt_symmetric(symmetric_key_path, user_keys_dir, file)
+        if (action == 'verify'):
+            if verify_signature(original_file, decrypted_file, sender_public_key):
+                return f"Download verified_{file.filename} (Signature verification successful)"
+        elif action == 'verify_and_decrypt':
+            if verify_signature_byte(os.path.join(os.path.join(user_keys_dir, 'received'), 'symmetric_encrypted_' + original_file.filename), decrypted_file, sender_public_key):
+                decrypt_symmetric_signed(symmetric_key_path, user_keys_dir, original_file)
+                return f"Download decrypted_signed_{original_file.filename}"
         else:
             return f"Download verified_{file.filename} (Signature verification failed)"
 
