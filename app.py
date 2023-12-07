@@ -16,17 +16,17 @@ def encrypt_symmetric(receiver_keys_dir, file):
     symmetric_key_path = os.path.join(receiver_keys_dir, 'symmetric_key.pem')
     saveSymmetricKey(symmetric_key, symmetric_key_path)
 
-    # Encrypt the file using the symmetric key
-    encrypt_file_symmetric(file.filename, os.path.join(os.path.join(receiver_keys_dir, 'received'), 'symmetric_encrypted_' + file.filename), symmetric_key)
+    # Encrypt the file using the symmetric key 
+    encrypt_file_symmetric(file.filename, os.path.join(os.path.join(receiver_keys_dir, 'received_symmetric_encrypted_action'), 'symmetric_encrypted_' + file.filename), symmetric_key)
 
-    return os.path.join(os.path.join(receiver_keys_dir, 'received'), 'symmetric_encrypted_' + file.filename)
+    return os.path.join(os.path.join(receiver_keys_dir, 'received_symmetric_encrypted_action'), 'symmetric_encrypted_' + file.filename)
 
 def decrypt_symmetric_signed(symmetric_key_path, user_keys_dir, file):
     # Load the symmetric key
     symmetric_key = loadSymmetricKey(symmetric_key_path)
 
     # Decrypt the file symmetrically
-    decrypt_file_symmetric(os.path.join(user_keys_dir + "/received", "symmetric_encrypted_" + file.filename), os.path.join(os.path.join(user_keys_dir, 'downloaded'), 'decrypted_signed_' + file.filename), symmetric_key)
+    decrypt_file_symmetric(os.path.join(user_keys_dir + "/received_symmetric_encrypted_action", "symmetric_encrypted_" + file.filename), os.path.join(os.path.join(user_keys_dir, 'downloaded_verify_and_decrypted'), 'decrypted_signed_' + file.filename), symmetric_key)
         
     return render_template('index.html')
 
@@ -35,7 +35,7 @@ def decrypt_symmetric(symmetric_key_path, user_keys_dir, file):
     symmetric_key = loadSymmetricKey(symmetric_key_path)
 
     # Decrypt the file symmetrically
-    decrypt_file_symmetric(os.path.join(user_keys_dir + "/received", file.filename), os.path.join(os.path.join(user_keys_dir, 'downloaded'), 'decrypted_' + file.filename), symmetric_key)
+    decrypt_file_symmetric(os.path.join(user_keys_dir + "/received_symmetric_encrypted_action", file.filename), os.path.join(os.path.join(user_keys_dir, 'downloaded_decrpyted_symmetric'), 'decrypted_' + file.filename), symmetric_key)
         
     return render_template('index.html')
 
@@ -97,28 +97,28 @@ def upload():
 
     if action == 'sign':
         # Sign and save the file
-        signed_file_path = prehash_sign_data(file.filename, os.path.join(os.path.join(receiver_keys_dir, 'received'), 'signed_' + file.filename), user_private_key)
+        signed_file_path = prehash_sign_data(file.filename, os.path.join(os.path.join(receiver_keys_dir, 'received_sign_action'), 'signed_' + file.filename), user_private_key)
         
         # Encrypt the signed file using the recipient's public key
-        derive_key_and_encrypt(signed_file_path , os.path.join(os.path.join(receiver_keys_dir, 'received'), 'asymmetric_encrypted_' + file.filename), receiver_public_key, user_private_key)
+        derive_key_and_encrypt(signed_file_path , os.path.join(os.path.join(receiver_keys_dir, 'received_sign_action'), 'asymmetric_encrypted_' + file.filename), receiver_public_key, user_private_key)
 
-        return f"Uploaded asymmetric_encrypted{file.filename} to {receiver_username} file directory !"
+        return f"Uploaded asymmetric_encrypted_{file.filename} to {receiver_username} file directory that named received_sign_action !"
 
     elif action == 'encrypt':
         encrypt_symmetric(receiver_keys_dir, file)
-        return f"Uploaded symmetric_encrypted{file.filename} to {receiver_username} file directory !"
+        return f"Uploaded symmetric_encrypted_{file.filename} to {receiver_username} file directory that named received_symmetric_encrypted_action !"
 
     elif action == 'sign_and_encrypt':
         # Encrypt the file symmetrically
         encrypted_file_path = encrypt_symmetric(receiver_keys_dir, file)
 
         # Sign and save the file
-        signed_file_path = prehash_sign_data(encrypted_file_path, os.path.join(os.path.join(receiver_keys_dir, 'received'), 'signed_' + file.filename), user_private_key)
+        signed_file_path = prehash_sign_data(encrypted_file_path, os.path.join(os.path.join(receiver_keys_dir, 'received_sign_and_encrypted_action'), 'signed_' + file.filename), user_private_key)
 
         # Encrypt the signed file using the recipient's public key
-        derive_key_and_encrypt(signed_file_path, os.path.join(os.path.join(receiver_keys_dir, 'received'), 'asymmetric_encrypted_' + file.filename), receiver_public_key, user_private_key)
+        derive_key_and_encrypt(signed_file_path, os.path.join(os.path.join(receiver_keys_dir, 'received_sign_and_encrypted_action'), 'asymmetric_encrypted_' + file.filename), receiver_public_key, user_private_key)
 
-        return f"Uploaded asymmetric_encrypted{file.filename} to {receiver_username} file directory !"
+        return f"Uploaded asymmetric_encrypted_{file.filename} to {receiver_username} file directory that named received_sign_and_encrypted_action !"
 
     return "Invalid parameters"
 
@@ -156,23 +156,26 @@ def download():
     # Decrypt and verify the file based on its name
     if file.filename.startswith('symmetric_encrypted_') and action == 'decrypt':
         decrypt_symmetric(symmetric_key_path, user_keys_dir, file)
-        return f"Download decrypted_{file.filename}"
+        return f"Download decrypted_{file.filename} in {username} file directory that named downloaded !"
 
-    elif file.filename.startswith('asymmetric_encrypted_') and (action == 'verify' or action == 'verify_and_decrypt'):
-        # Decrypt and verify the file asymmetrically
-        decrypted_file = derive_key_and_decrypt(os.path.join(user_keys_dir + "/received", file.filename), os.path.join(os.path.join(user_keys_dir, 'downloaded'), 'decrypted_' + file.filename), sender_public_key, user_private_key)
-
+    elif file.filename.startswith('asymmetric_encrypted_'):
         if (action == 'verify'):
+            # Decrypt and verify the file asymmetrically
+            decrypted_file = derive_key_and_decrypt(os.path.join(user_keys_dir + "/received_sign_action", file.filename), os.path.join(os.path.join(user_keys_dir, 'downloaded_signed'), 'decrypted_' + file.filename), sender_public_key, user_private_key)
             if verify_signature(original_file, decrypted_file, sender_public_key):
                 return f"Download verified_{file.filename} (Signature verification successful)"
+            print("Signature verification failed")
         elif action == 'verify_and_decrypt':
-            if verify_signature_byte(os.path.join(os.path.join(user_keys_dir, 'received'), 'symmetric_encrypted_' + original_file.filename), decrypted_file, sender_public_key):
+            # Decrypt and verify the file asymmetrically
+            decrypted_file = derive_key_and_decrypt(os.path.join(user_keys_dir + "/received_sign_and_encrypted_action", file.filename), os.path.join(os.path.join(user_keys_dir, 'downloaded_verify_and_decrypted'), 'decrypted_' + file.filename), sender_public_key, user_private_key)
+
+            if verify_signature_byte(os.path.join(os.path.join(user_keys_dir, 'received_symmetric_encrypted_action'), 'symmetric_encrypted_' + original_file.filename), decrypted_file, sender_public_key):
                 decrypt_symmetric_signed(symmetric_key_path, user_keys_dir, original_file)
                 return f"Download decrypted_signed_{original_file.filename}"
         else:
             return f"Download verified_{file.filename} (Signature verification failed)"
 
-    return "Invalid parameters"
+    return "Invalid parameters2"
 
 if __name__ == '__main__':
     app.run(debug=True)
